@@ -39,6 +39,10 @@ const translations = {
         history_action: '操作',
         history_empty: '暂无构建记录',
         api_notice: '注意：要使用自动构建功能，需要配置具有 repo 权限的 GitHub Token。没有 Token 时，构建将通过手动触发。',
+        token_label: 'GitHub Token（可选）',
+        token_hint: '用于自动构建。从 GitHub Settings → Developer settings → Personal access tokens 获取',
+        token_saved: 'Token 已保存',
+        token_empty: '未配置 Token，需手动触发构建',
         footer: '作者: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions'
     },
     en: {
@@ -80,6 +84,10 @@ const translations = {
         history_action: 'Action',
         history_empty: 'No build history found',
         api_notice: 'Note: To use automatic builds, you need to configure a GitHub Token with repo scope. Without a token, builds will be triggered manually.',
+        token_label: 'GitHub Token (Optional)',
+        token_hint: 'For automatic builds. Get from GitHub Settings → Developer settings → Personal access tokens',
+        token_saved: 'Token saved',
+        token_empty: 'No token configured, manual trigger required',
         footer: 'Author: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions'
     }
 };
@@ -124,6 +132,7 @@ const aiNews = {
 
 let currentLang = localStorage.getItem('docker-builder-lang') || 'zh';
 let buildInProgress = false;
+let githubToken = localStorage.getItem('docker-builder-token') || '';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -136,7 +145,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Hide entertainment section initially
     document.querySelector('.entertainment-section').classList.add('hidden');
+
+    // Initialize token input
+    const tokenInput = document.getElementById('githubToken');
+    if (githubToken) {
+        tokenInput.value = githubToken;
+        updateTokenStatus(true);
+    }
+
+    // Save token on input
+    tokenInput.addEventListener('input', (e) => {
+        const token = e.target.value.trim();
+        if (token) {
+            githubToken = token;
+            localStorage.setItem('docker-builder-token', token);
+            updateTokenStatus(true);
+        } else {
+            githubToken = '';
+            localStorage.removeItem('docker-builder-token');
+            updateTokenStatus(false);
+        }
+    });
 });
+
+// Update token status display
+function updateTokenStatus(saved) {
+    const statusEl = document.getElementById('tokenStatus');
+    if (saved && githubToken) {
+        statusEl.textContent = currentLang === 'zh' ? 'Token 已保存' : 'Token saved';
+        statusEl.className = 'token-status saved';
+    } else {
+        statusEl.textContent = currentLang === 'zh' ? '未配置 Token，需手动触发构建' : 'No token configured, manual trigger required';
+        statusEl.className = 'token-status empty';
+    }
+}
 
 // Language toggle
 function toggleLanguage() {
@@ -276,10 +318,6 @@ async function startBuild() {
 
 // Trigger GitHub Actions workflow via API
 async function triggerWorkflow(imageSource, imageName, imageTag, architectures) {
-    // Note: This requires a GitHub token with repo scope
-    // For public repos, we can use the dispatch endpoint
-    const token = ''; // User needs to configure this
-    
     const url = 'https://api.github.com/repos/Ac-All-Sh/docker-builder/actions/workflows/build.yml/dispatches';
     
     const body = {
@@ -297,8 +335,9 @@ async function triggerWorkflow(imageSource, imageName, imageTag, architectures) 
         'Content-Type': 'application/json'
     };
 
-    if (token) {
-        headers['Authorization'] = `token ${token}`;
+    // Use saved token if available
+    if (githubToken) {
+        headers['Authorization'] = `token ${githubToken}`;
     }
 
     const response = await fetch(url, {
@@ -308,11 +347,15 @@ async function triggerWorkflow(imageSource, imageName, imageTag, architectures) 
     });
 
     if (response.status === 204) {
-        return { id: 'manual-trigger-' + Date.now() };
+        return { id: 'triggered-' + Date.now() };
     } else if (response.status === 404) {
         throw new Error(currentLang === 'zh' 
-            ? '无法触发工作流。请确保仓库公开或配置了 GitHub Token。' 
-            : 'Cannot trigger workflow. Ensure repo is public or configure GitHub Token.');
+            ? '无法触发工作流。请确保配置了有效的 GitHub Token。' 
+            : 'Cannot trigger workflow. Please configure a valid GitHub Token.');
+    } else if (response.status === 403) {
+        throw new Error(currentLang === 'zh' 
+            ? 'Token 权限不足。请确保 Token 具有 repo 和 workflow 权限。' 
+            : 'Insufficient token permissions. Ensure token has repo and workflow scope.');
     } else {
         const data = await response.json();
         throw new Error(data.message || 'Failed to trigger workflow');

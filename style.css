@@ -266,18 +266,17 @@ input[type="text"]::placeholder {
     flex: 1;
 }
 
-.api-notice {
-    margin-top: 1rem;
-    padding: 0.75rem 1rem;
-    background: rgba(237, 137, 54, 0.1);
-    border: 1px solid rgba(237, 137, 54, 0.3);
-    border-radius: 8px;
+.token-status {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
 }
 
-.api-notice p {
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--warning);
+.token-status.saved {
+    color: var(--success);
+}
+
+.token-status.empty {
+    color: var(--text-secondary);
 }
 
 /* Modal Styles */
