@@ -1,0 +1,117 @@
+name: Build and Push Docker Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_source:
+        description: 'Source image (e.g., nginx, ubuntu, redis)'
+        required: true
+        type: string
+      image_name:
+        description: 'Output image name (e.g., yourusername/myapp)'
+        required: true
+        type: string
+      image_tag:
+        description: 'Image tag (leave empty for latest)'
+        required: false
+        default: 'latest'
+        type: string
+      architectures:
+        description: 'Target architectures (comma separated: amd64,arm64,arm)'
+        required: true
+        default: 'amd64,arm64'
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Parse inputs
+        id: parse
+        run: |
+          IMAGE_SOURCE="${{ github.event.inputs.image_source }}"
+          IMAGE_NAME="${{ github.event.inputs.image_name }}"
+          IMAGE_TAG="${{ github.event.inputs.image_tag }}"
+          ARCHITECTURES="${{ github.event.inputs.architectures }}"
+
+          # Default tag to latest if empty
+          if [ -z "$IMAGE_TAG" ]; then
+            IMAGE_TAG="latest"
+          fi
+
+          # Convert architectures to platform format
+          PLATFORMS=""
+          IFS=',' read -ra ARCH_ARRAY <<< "$ARCHITECTURES"
+          for arch in "${ARCH_ARRAY[@]}"; do
+            case $arch in
+              amd64) PLATFORMS="${PLATFORMS:+$PLATFORMS,}linux/amd64" ;;
+              arm64) PLATFORMS="${PLATFORMS:+$PLATFORMS,}linux/arm64" ;;
+              arm) PLATFORMS="${PLATFORMS:+$PLATFORMS,}linux/arm/v7" ;;
+            esac
+          done
+
+          echo "image_source=$IMAGE_SOURCE" >> $GITHUB_OUTPUT
+          echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
+
+          echo "=== Build Configuration ==="
+          echo "Source: $IMAGE_SOURCE"
+          echo "Output: $IMAGE_NAME:$IMAGE_TAG"
+          echo "Platforms: $PLATFORMS"
+
+      - name: Pull and retag image
+        run: |
+          IMAGE_SOURCE="${{ steps.parse.outputs.image_source }}"
+          IMAGE_NAME="${{ steps.parse.outputs.image_name }}"
+          IMAGE_TAG="${{ steps.parse.outputs.image_tag }}"
+
+          echo "Pulling source image: $IMAGE_SOURCE"
+          docker pull "$IMAGE_SOURCE" || true
+
+          echo "Tagging image..."
+          docker tag "$IMAGE_SOURCE" "$IMAGE_NAME:$IMAGE_TAG" || true
+
+      - name: Build and push multi-arch image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          platforms: ${{ steps.parse.outputs.platforms }}
+          push: true
+          tags: |
+            ${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.image_tag }}
+          build-args: |
+            SOURCE_IMAGE=${{ steps.parse.outputs.image_source }}
+
+      - name: Generate summary
+        run: |
+          IMAGE_NAME="${{ steps.parse.outputs.image_name }}"
+          IMAGE_TAG="${{ steps.parse.outputs.image_tag }}"
+          PLATFORMS="${{ steps.parse.outputs.platforms }}"
+
+          echo "## Docker Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Source Image:** \`${{ github.event.inputs.image_source }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Output Image:** \`${IMAGE_NAME}:${IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** \`${PLATFORMS}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Pull Command" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
