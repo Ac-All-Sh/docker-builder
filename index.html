@@ -219,6 +219,60 @@
         </div>
     </div>
 
+    <!-- Build Detail Modal -->
+    <div id="detailModal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 data-i18n="detail_title">Build Details</h2>
+                <button class="modal-close" onclick="hideDetail()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="detailLoading" class="loading">
+                    <div class="spinner"></div>
+                    <p data-i18n="detail_loading">Loading build details...</p>
+                </div>
+                <div id="detailContent" class="hidden">
+                    <div class="detail-info">
+                        <div class="detail-row">
+                            <span class="detail-label" data-i18n="detail_id">Run ID</span>
+                            <span id="detailId" class="detail-value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label" data-i18n="detail_status">Status</span>
+                            <span id="detailStatus" class="detail-value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label" data-i18n="detail_trigger">Triggered By</span>
+                            <span id="detailTrigger" class="detail-value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label" data-i18n="detail_commit">Commit</span>
+                            <span id="detailCommit" class="detail-value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label" data-i18n="detail_duration">Duration</span>
+                            <span id="detailDuration" class="detail-value"></span>
+                        </div>
+                    </div>
+                    <div class="detail-logs">
+                        <h3 data-i18n="detail_logs">Build Logs</h3>
+                        <div id="detailLogs" class="logs-container">
+                            <p data-i18n="detail_logs_loading">Loading logs...</p>
+                        </div>
+                    </div>
+                    <div class="detail-actions">
+                        <a id="detailGithubLink" href="#" target="_blank" class="action-btn">
+                            <span data-i18n="detail_view_github">View on GitHub</span>
+                        </a>
+                        <button class="action-btn secondary" onclick="retryBuild()">
+                            <span data-i18n="detail_retry">Retry Build</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer>
         <p data-i18n="footer">Author: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions</p>
     </footer>

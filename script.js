@@ -43,6 +43,18 @@ const translations = {
         token_hint: '用于自动构建。从 GitHub Settings → Developer settings → Personal access tokens 获取',
         token_saved: 'Token 已保存',
         token_empty: '未配置 Token，需手动触发构建',
+        detail_title: '构建详情',
+        detail_loading: '加载构建详情...',
+        detail_id: 'Run ID',
+        detail_status: '状态',
+        detail_trigger: '触发者',
+        detail_commit: '提交',
+        detail_duration: '耗时',
+        detail_logs: '构建日志',
+        detail_logs_loading: '加载日志...',
+        detail_logs_empty: '暂无日志',
+        detail_view_github: '在 GitHub 查看',
+        detail_retry: '重新构建',
         footer: '作者: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions'
     },
     en: {
@@ -88,6 +100,18 @@ const translations = {
         token_hint: 'For automatic builds. Get from GitHub Settings → Developer settings → Personal access tokens',
         token_saved: 'Token saved',
         token_empty: 'No token configured, manual trigger required',
+        detail_title: 'Build Details',
+        detail_loading: 'Loading build details...',
+        detail_id: 'Run ID',
+        detail_status: 'Status',
+        detail_trigger: 'Triggered By',
+        detail_commit: 'Commit',
+        detail_duration: 'Duration',
+        detail_logs: 'Build Logs',
+        detail_logs_loading: 'Loading logs...',
+        detail_logs_empty: 'No logs available',
+        detail_view_github: 'View on GitHub',
+        detail_retry: 'Retry Build',
         footer: 'Author: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions'
     }
 };
@@ -465,9 +489,9 @@ function renderHistoryTable() {
             </td>
             <td>${build.date}</td>
             <td>
-                <a href="${build.url}" target="_blank" class="action-btn">
-                    ${currentLang === 'zh' ? '查看' : 'View'}
-                </a>
+                <button class="action-btn" onclick="showBuildDetail(${build.id})">
+                    ${currentLang === 'zh' ? '详情' : 'Details'}
+                </button>
             </td>
         </tr>
     `).join('');
@@ -531,6 +555,108 @@ function changePage(page) {
     if (page < 1 || page > totalPages) return;
     historyPage = page;
     renderHistoryTable();
+}
+
+// Show Build Detail
+async function showBuildDetail(runId) {
+    document.getElementById('detailModal').classList.remove('hidden');
+    document.getElementById('detailLoading').classList.remove('hidden');
+    document.getElementById('detailContent').classList.add('hidden');
+
+    try {
+        // Fetch run details
+        const response = await fetch(`https://api.github.com/repos/Ac-All-Sh/docker-builder/actions/runs/${runId}`);
+        const run = await response.json();
+
+        // Fetch jobs for this run
+        const jobsResponse = await fetch(`https://api.github.com/repos/Ac-All-Sh/docker-builder/actions/runs/${runId}/jobs`);
+        const jobsData = await jobsResponse.json();
+
+        // Populate detail info
+        document.getElementById('detailId').textContent = run.id;
+        document.getElementById('detailStatus').innerHTML = `<span class="status-badge ${getStatusClass({status: run.status, conclusion: run.conclusion})}">${getStatusText({status: run.status, conclusion: run.conclusion})}</span>`;
+        document.getElementById('detailTrigger').textContent = run.actor?.login || 'Unknown';
+        document.getElementById('detailCommit').textContent = run.head_sha?.substring(0, 7) || 'N/A';
+        
+        const duration = run.updated_at && run.created_at 
+            ? Math.round((new Date(run.updated_at) - new Date(run.created_at)) / 1000)
+            : 0;
+        document.getElementById('detailDuration').textContent = formatDuration(duration);
+        
+        document.getElementById('detailGithubLink').href = run.html_url;
+
+        // Fetch logs for the first job
+        if (jobsData.jobs && jobsData.jobs.length > 0) {
+            const jobId = jobsData.jobs[0].id;
+            await fetchJobLogs(jobId);
+        }
+
+        document.getElementById('detailLoading').classList.add('hidden');
+        document.getElementById('detailContent').classList.remove('hidden');
+
+    } catch (error) {
+        console.error('Error loading build details:', error);
+        document.getElementById('detailLogs').innerHTML = `<p class="error">${currentLang === 'zh' ? '加载失败: ' : 'Failed to load: '}${error.message}</p>`;
+        document.getElementById('detailLoading').classList.add('hidden');
+        document.getElementById('detailContent').classList.remove('hidden');
+    }
+}
+
+// Fetch Job Logs
+async function fetchJobLogs(jobId) {
+    const logsContainer = document.getElementById('detailLogs');
+    
+    try {
+        const response = await fetch(`https://api.github.com/repos/Ac-All-Sh/docker-builder/actions/jobs/${jobId}/logs`);
+        const text = await response.text();
+        
+        // Parse and format logs
+        const lines = text.split('\n').filter(line => line.trim());
+        const formattedLines = lines.slice(-100).map(line => {
+            let className = 'log-line';
+            if (line.includes('error') || line.includes('Error') || line.includes('ERROR')) {
+                className += ' error';
+            } else if (line.includes('success') || line.includes('Success') || line.includes('DONE')) {
+                className += ' success';
+            } else if (line.includes('warning') || line.includes('Warning')) {
+                className += ' warning';
+            }
+            return `<div class="${className}">${escapeHtml(line)}</div>`;
+        }).join('');
+
+        logsContainer.innerHTML = formattedLines || `<p>${currentLang === 'zh' ? '暂无日志' : 'No logs available'}</p>`;
+        logsContainer.scrollTop = logsContainer.scrollHeight;
+
+    } catch (error) {
+        logsContainer.innerHTML = `<p class="error">${currentLang === 'zh' ? '无法加载日志' : 'Cannot load logs'}</p>`;
+    }
+}
+
+// Format Duration
+function formatDuration(seconds) {
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
+}
+
+// Escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Hide Detail Modal
+function hideDetail() {
+    document.getElementById('detailModal').classList.add('hidden');
+}
+
+// Retry Build
+function retryBuild() {
+    hideDetail();
+    // Scroll to build form
+    document.querySelector('.builder-section').scrollIntoView({ behavior: 'smooth' });
 }
 
 // Snake Game
