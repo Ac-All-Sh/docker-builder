@@ -444,6 +444,18 @@ input[type="text"]::placeholder {
     margin-bottom: 0.5rem;
 }
 
+.news-link {
+    display: inline-block;
+    margin-top: 0.5rem;
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+
+.news-link:hover {
+    text-decoration: underline;
+}
+
 .refresh-btn {
     margin-top: 1rem;
     padding: 0.5rem 1rem;
@@ -457,6 +469,10 @@ input[type="text"]::placeholder {
 
 .refresh-btn:hover {
     background: var(--border);
+}
+
+.hidden {
+    display: none !important;
 }
 
 .game-container {

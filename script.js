@@ -23,11 +23,12 @@ const translations = {
         news_title: '技术资讯',
         news_loading: '加载中...',
         news_refresh: '刷新',
+        news_more: '查看更多',
         game_title: '贪吃蛇',
         game_score: '得分: 0',
         game_start: '开始游戏',
         game_hint: '使用方向键或 WASD 控制',
-        animation_text: '等待构建时，欣赏动画',
+        animation_text: '构建进行中，请稍候...',
         footer: '作者: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions'
     },
     en: {
@@ -53,55 +54,74 @@ const translations = {
         news_title: 'Tech News',
         news_loading: 'Loading news...',
         news_refresh: 'Refresh',
+        news_more: 'View More',
         game_title: 'Snake Game',
         game_score: 'Score: 0',
         game_start: 'Start Game',
         game_hint: 'Use arrow keys or WASD to play',
-        animation_text: 'While waiting, enjoy this animation!',
+        animation_text: 'Building in progress, please wait...',
         footer: 'Author: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions'
     }
 };
 
-let currentLang = 'zh';
-
-// AI News data
+// AI News data with links
 const aiNews = {
     zh: [
-        { tag: 'AI', title: 'GPT-5 发布，推理能力大幅提升', content: 'OpenAI 宣布 GPT-5，在逻辑推理和代码生成方面有显著改进。' },
-        { tag: 'Docker', title: 'Docker Desktop 4.25 发布', content: '新功能包括改进的大型容器镜像性能和更好的 Kubernetes 集成。' },
-        { tag: 'Cloud', title: 'AWS Lambda 新增 ARM64 支持', content: 'AWS Lambda 现在支持 ARM64 架构，提供更好的性价比。' },
-        { tag: 'Security', title: 'OpenSSL 发现严重漏洞', content: '新 CVE-2024-XXXX 影响 OpenSSL 3.x，用户需立即更新。' },
-        { tag: 'DevOps', title: 'GitHub Actions 改进缓存', content: '新的缓存策略使 CI/CD 管道构建时间减少高达 40%。' },
-        { tag: 'Kubernetes', title: 'K8s 1.29 发布', content: 'Kubernetes 1.29 引入了改进集群管理和安全性的新功能。' },
-        { tag: 'AI', title: 'Google Gemini Ultra 超越 GPT-4', content: 'Google 声称 Gemini Ultra 在多个基准测试中达到最先进水平。' },
-        { tag: 'Linux', title: 'Linux 内核 6.8 发布', content: '新内核版本包含改进的硬件支持和性能优化。' },
-        { tag: 'Security', title: '勒索软件攻击瞄准 Docker 仓库', content: '多个 Docker Hub 账户被入侵，建议用户启用双因素认证。' },
-        { tag: 'DevOps', title: 'Terraform 1.7 引入无 Provider 状态', content: '新功能允许在不需要 Provider 插件的情况下管理资源。' }
+        { tag: 'AI', title: 'GPT-5 发布，推理能力大幅提升', content: 'OpenAI 宣布 GPT-5，在逻辑推理和代码生成方面有显著改进。', link: 'https://openai.com' },
+        { tag: 'Docker', title: 'Docker Desktop 4.25 发布', content: '新功能包括改进的大型容器镜像性能和更好的 Kubernetes 集成。', link: 'https://www.docker.com/blog/' },
+        { tag: 'Cloud', title: 'AWS Lambda 新增 ARM64 支持', content: 'AWS Lambda 现在支持 ARM64 架构，提供更好的性价比。', link: 'https://aws.amazon.com/blogs/aws/' },
+        { tag: 'Security', title: 'OpenSSL 发现严重漏洞', content: '新 CVE-2024-XXXX 影响 OpenSSL 3.x，用户需立即更新。', link: 'https://www.openssl.org/' },
+        { tag: 'DevOps', title: 'GitHub Actions 改进缓存', content: '新的缓存策略使 CI/CD 管道构建时间减少高达 40%。', link: 'https://github.blog/' },
+        { tag: 'Kubernetes', title: 'K8s 1.29 发布', content: 'Kubernetes 1.29 引入了改进集群管理和安全性的新功能。', link: 'https://kubernetes.io/blog/' },
+        { tag: 'AI', title: 'Google Gemini Ultra 超越 GPT-4', content: 'Google 声称 Gemini Ultra 在多个基准测试中达到最先进水平。', link: 'https://blog.google/' },
+        { tag: 'Linux', title: 'Linux 内核 6.8 发布', content: '新内核版本包含改进的硬件支持和性能优化。', link: 'https://www.kernel.org/' },
+        { tag: 'Security', title: '勒索软件攻击瞄准 Docker 仓库', content: '多个 Docker Hub 账户被入侵，建议用户启用双因素认证。', link: 'https://hub.docker.com/' },
+        { tag: 'DevOps', title: 'Terraform 1.7 引入无 Provider 状态', content: '新功能允许在不需要 Provider 插件的情况下管理资源。', link: 'https://www.terraform.io/blog' },
+        { tag: 'Containers', title: 'Podman 5.0 发布', content: 'Podman 5.0 带来了性能改进和新的 rootless 容器功能。', link: 'https://podman.io/' },
+        { tag: 'Networking', title: 'Cilium 1.15 发布', content: '新的 eBPF 网络功能提升了 Kubernetes 集群的网络性能。', link: 'https://cilium.io/' },
+        { tag: 'Security', title: 'SLSA 1.0 供应链安全标准', content: 'Google 发布 SLSA 1.0 标准，提升软件供应链安全性。', link: 'https://slsa.dev/' },
+        { tag: 'AI', title: 'Meta 发布 Llama 3', content: 'Meta 发布开源大语言模型 Llama 3，性能媲美闭源模型。', link: 'https://ai.meta.com/' },
+        { tag: 'Cloud', title: 'Cloud Native Computing Foundation 年度报告', content: 'CNCF 发布年度报告，云原生技术采用率持续增长。', link: 'https://www.cncf.io/' }
     ],
     en: [
-        { tag: 'AI', title: 'GPT-5 Released with Enhanced Reasoning', content: 'OpenAI announces GPT-5 with significant improvements in logical reasoning and code generation.' },
-        { tag: 'Docker', title: 'Docker Desktop 4.25 Released', content: 'New features include improved performance for large container images and better Kubernetes integration.' },
-        { tag: 'Cloud', title: 'AWS Lambda Adds ARM64 Support', content: 'AWS Lambda now supports ARM64 architecture for better price-performance ratio.' },
-        { tag: 'Security', title: 'Critical Vulnerability Found in OpenSSL', content: 'New CVE-2024-XXXX affects OpenSSL 3.x, users urged to update immediately.' },
-        { tag: 'DevOps', title: 'GitHub Actions Improves Caching', content: 'New caching strategies reduce build times by up to 40% for CI/CD pipelines.' },
-        { tag: 'Kubernetes', title: 'K8s 1.29 Released', content: 'Kubernetes 1.29 introduces new features for improved cluster management and security.' },
-        { tag: 'AI', title: 'Google Gemini Ultra Outperforms GPT-4', content: 'Google claims Gemini Ultra achieves state-of-the-art results on multiple benchmarks.' },
-        { tag: 'Linux', title: 'Linux Kernel 6.8 Released', content: 'New kernel version includes improved hardware support and performance optimizations.' },
-        { tag: 'Security', title: 'Ransomware Attack Targets Docker Registries', content: 'Multiple Docker Hub accounts compromised, users advised to enable 2FA.' },
-        { tag: 'DevOps', title: 'Terraform 1.7 Introduces Provider-Less State', content: 'New feature allows managing resources without requiring provider plugins.' }
+        { tag: 'AI', title: 'GPT-5 Released with Enhanced Reasoning', content: 'OpenAI announces GPT-5 with significant improvements in logical reasoning and code generation.', link: 'https://openai.com' },
+        { tag: 'Docker', title: 'Docker Desktop 4.25 Released', content: 'New features include improved performance for large container images and better Kubernetes integration.', link: 'https://www.docker.com/blog/' },
+        { tag: 'Cloud', title: 'AWS Lambda Adds ARM64 Support', content: 'AWS Lambda now supports ARM64 architecture for better price-performance ratio.', link: 'https://aws.amazon.com/blogs/aws/' },
+        { tag: 'Security', title: 'Critical Vulnerability Found in OpenSSL', content: 'New CVE-2024-XXXX affects OpenSSL 3.x, users urged to update immediately.', link: 'https://www.openssl.org/' },
+        { tag: 'DevOps', title: 'GitHub Actions Improves Caching', content: 'New caching strategies reduce build times by up to 40% for CI/CD pipelines.', link: 'https://github.blog/' },
+        { tag: 'Kubernetes', title: 'K8s 1.29 Released', content: 'Kubernetes 1.29 introduces new features for improved cluster management and security.', link: 'https://kubernetes.io/blog/' },
+        { tag: 'AI', title: 'Google Gemini Ultra Outperforms GPT-4', content: 'Google claims Gemini Ultra achieves state-of-the-art results on multiple benchmarks.', link: 'https://blog.google/' },
+        { tag: 'Linux', title: 'Linux Kernel 6.8 Released', content: 'New kernel version includes improved hardware support and performance optimizations.', link: 'https://www.kernel.org/' },
+        { tag: 'Security', title: 'Ransomware Attack Targets Docker Registries', content: 'Multiple Docker Hub accounts compromised, users advised to enable 2FA.', link: 'https://hub.docker.com/' },
+        { tag: 'DevOps', title: 'Terraform 1.7 Introduces Provider-Less State', content: 'New feature allows managing resources without requiring provider plugins.', link: 'https://www.terraform.io/blog' },
+        { tag: 'Containers', title: 'Podman 5.0 Released', content: 'Podman 5.0 brings performance improvements and new rootless container features.', link: 'https://podman.io/' },
+        { tag: 'Networking', title: 'Cilium 1.15 Released', content: 'New eBPF networking features enhance Kubernetes cluster network performance.', link: 'https://cilium.io/' },
+        { tag: 'Security', title: 'SLSA 1.0 Supply Chain Security Standard', content: 'Google releases SLSA 1.0 standard to improve software supply chain security.', link: 'https://slsa.dev/' },
+        { tag: 'AI', title: 'Meta Releases Llama 3', content: 'Meta releases open-source large language model Llama 3, rivaling closed-source models.', link: 'https://ai.meta.com/' },
+        { tag: 'Cloud', title: 'CNCF Annual Report', content: 'CNCF releases annual report showing continued growth in cloud-native technology adoption.', link: 'https://www.cncf.io/' }
     ]
 };
 
+let currentLang = localStorage.getItem('docker-builder-lang') || 'zh';
+let buildInProgress = false;
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Set initial language button state
+    document.getElementById('langToggle').textContent = currentLang === 'zh' ? 'EN' : '中文';
+    document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+    updateLanguage();
     loadNews();
     initGame();
-    updateLanguage();
+
+    // Hide entertainment section initially
+    document.querySelector('.entertainment-section').classList.add('hidden');
 });
 
 // Language toggle
 function toggleLanguage() {
     currentLang = currentLang === 'zh' ? 'en' : 'zh';
+    localStorage.setItem('docker-builder-lang', currentLang);
     document.getElementById('langToggle').textContent = currentLang === 'zh' ? 'EN' : '中文';
     document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
     updateLanguage();
@@ -137,13 +157,14 @@ function switchTab(tabName) {
 function loadNews() {
     const newsContent = document.getElementById('newsContent');
     const news = aiNews[currentLang];
-    const shuffled = [...news].sort(() => Math.random() - 0.5).slice(0, 4);
+    const shuffled = [...news].sort(() => Math.random() - 0.5).slice(0, 6);
 
     newsContent.innerHTML = shuffled.map(n => `
         <div class="news-item">
             <span class="news-tag">${n.tag}</span>
             <h4>${n.title}</h4>
             <p>${n.content}</p>
+            <a href="${n.link}" target="_blank" class="news-link">${translations[currentLang].news_more}</a>
         </div>
     `).join('');
 }
@@ -176,6 +197,9 @@ async function startBuild() {
     }
 
     buildInProgress = true;
+
+    // Show entertainment section
+    document.querySelector('.entertainment-section').classList.remove('hidden');
 
     document.getElementById('buildStatus').classList.remove('hidden');
     document.getElementById('buildResult').classList.add('hidden');
@@ -240,6 +264,8 @@ function resetForm() {
     document.getElementById('buildStatus').classList.add('hidden');
     document.getElementById('buildResult').classList.add('hidden');
     document.getElementById('buildLogs').innerHTML = `<div class="log-entry">${translations[currentLang].log_waiting}</div>`;
+    // Hide entertainment section
+    document.querySelector('.entertainment-section').classList.add('hidden');
 }
 
 function sleep(ms) {
