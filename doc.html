@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Builder - Documentation</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23667eea'><path d='M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.186m0 2.716h2.118a.186.186 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.186.186 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.887c0 .102.083.185.185.185m-2.964 0h2.119a.186.186 0 00.185-.185V9.006a.186.186 0 00-.185-.186H5.136a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.887c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z'/></svg>">
+    <style>
+        .doc-content {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        .doc-content h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .doc-content h3 {
+            color: var(--text-primary);
+            margin: 1.5rem 0 0.75rem;
+        }
+        .doc-content p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+        .doc-content ul {
+            color: var(--text-secondary);
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .doc-content li {
+            margin-bottom: 0.5rem;
+        }
+        .doc-content code {
+            background: var(--bg-dark);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            color: var(--success);
+        }
+        .doc-content pre {
+            background: var(--bg-dark);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+        .doc-content pre code {
+            padding: 0;
+            background: none;
+        }
+        .back-link {
+            display: inline-block;
+            color: var(--primary);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .lang-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .lang-tab {
+            padding: 0.5rem 1rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .lang-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .doc-section {
+            display: none;
+        }
+        .doc-section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <div class="logo">
+                    <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor">
+                        <path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.186m0 2.716h2.118a.186.186 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.186.186 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.887c0 .102.083.185.185.185m-2.964 0h2.119a.186.186 0 00.185-.185V9.006a.186.186 0 00-.185-.186H5.136a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.887c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"/>
+                    </svg>
+                    <h1>Docker Builder</h1>
+                </div>
+                <div class="header-controls">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="https://github.com/Ac-All-Sh/docker-builder" class="nav-link">GitHub</a>
+                </div>
+            </div>
+        </header>
+
+        <a href="index.html" class="back-link">&larr; Back to Builder</a>
+
+        <div class="lang-tabs">
+            <button class="lang-tab active" onclick="switchDocLang('zh')">中文</button>
+            <button class="lang-tab" onclick="switchDocLang('en')">English</button>
+        </div>
+
+        <div id="doc-zh" class="doc-section active">
+            <div class="doc-content">
+                <h2>简介</h2>
+                <p>Docker Builder 是一个自动构建多架构 Docker 镜像的工具。它使用 GitHub Actions 在后台构建镜像，并推送到 Docker Hub。</p>
+
+                <h2>功能特性</h2>
+                <ul>
+                    <li>多架构支持: amd64, arm64, arm</li>
+                    <li>一键构建: 简单的 Web 界面</li>
+                    <li>自动化: 使用 GitHub Actions</li>
+                    <li>实时日志: 构建过程中可查看进度</li>
+                </ul>
+
+                <h2>快速开始</h2>
+
+                <h3>1. 配置 Docker Hub</h3>
+                <p>在 GitHub 仓库中配置 Secrets:</p>
+                <ul>
+                    <li>访问仓库 Settings > Secrets and variables > Actions</li>
+                    <li>添加 <code>DOCKERHUB_USER</code>: 你的 Docker Hub 用户名</li>
+                    <li>添加 <code>DOCKERHUB_TOKEN</code>: Docker Hub Access Token</li>
+                </ul>
+
+                <h3>2. 获取 Docker Hub Token</h3>
+                <ul>
+                    <li>登录 Docker Hub</li>
+                    <li>进入 Account Settings > Security > New Access Token</li>
+                    <li>创建 Access Token 并复制</li>
+                </ul>
+
+                <h3>3. 使用 Web 界面</h3>
+                <ul>
+                    <li>访问 <code>https://ac-all-sh.github.io/docker-builder/</code></li>
+                    <li>输入源镜像 (如 <code>nginx</code>)</li>
+                    <li>输入输出镜像 (如 <code>yourusername/nginx</code>)</li>
+                    <li>选择架构</li>
+                    <li>点击 "开始构建"</li>
+                </ul>
+
+                <h2>API 接口</h2>
+
+                <h3>GitHub Actions Workflow</h3>
+                <p>可以通过 GitHub Actions 手动触发构建:</p>
+                <pre><code>gh workflow run build.yml \
+  -f image_source=nginx \
+  -f image_name=yourusername/nginx \
+  -f image_tag=latest \
+  -f architectures=amd64,arm64</code></pre>
+
+                <h3>参数说明</h3>
+                <table style="width:100%; border-collapse:collapse; margin-top:1rem;">
+                    <tr style="background:var(--bg-input);">
+                        <th style="padding:0.75rem; text-align:left; border:1px solid var(--border);">参数</th>
+                        <th style="padding:0.75rem; text-align:left; border:1px solid var(--border);">说明</th>
+                        <th style="padding:0.75rem; text-align:left; border:1px solid var(--border);">必填</th>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.75rem; border:1px solid var(--border);"><code>image_source</code></td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">源镜像名称</td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">是</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.75rem; border:1px solid var(--border);"><code>image_name</code></td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">输出镜像名称</td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">是</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.75rem; border:1px solid var(--border);"><code>image_tag</code></td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">镜像标签 (默认: latest)</td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">否</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.75rem; border:1px solid var(--border);"><code>architectures</code></td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">目标架构 (逗号分隔)</td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">是</td>
+                    </tr>
+                </table>
+
+                <h2>支持的架构</h2>
+                <ul>
+                    <li><code>amd64</code> - x86_64</li>
+                    <li><code>arm64</code> - 64位 ARM</li>
+                    <li><code>arm</code> - 32位 ARM (v7)</li>
+                </ul>
+
+                <h2>拉取镜像</h2>
+                <pre><code># 拉取特定架构
+docker pull --platform linux/amd64 yourusername/myapp:latest
+
+# 拉取特定标签
+docker pull yourusername/myapp:v1.0.0</code></pre>
+            </div>
+        </div>
+
+        <div id="doc-en" class="doc-section">
+            <div class="doc-content">
+                <h2>Introduction</h2>
+                <p>Docker Builder is a tool for automatically building multi-architecture Docker images. It uses GitHub Actions to build images in the background and push them to Docker Hub.</p>
+
+                <h2>Features</h2>
+                <ul>
+                    <li>Multi-architecture support: amd64, arm64, arm</li>
+                    <li>One-click build: Simple web interface</li>
+                    <li>Automation: Uses GitHub Actions</li>
+                    <li>Real-time logs: View progress during build</li>
+                </ul>
+
+                <h2>Quick Start</h2>
+
+                <h3>1. Configure Docker Hub</h3>
+                <p>Configure Secrets in your GitHub repository:</p>
+                <ul>
+                    <li>Go to Settings > Secrets and variables > Actions</li>
+                    <li>Add <code>DOCKERHUB_USER</code>: Your Docker Hub username</li>
+                    <li>Add <code>DOCKERHUB_TOKEN</code>: Docker Hub Access Token</li>
+                </ul>
+
+                <h3>2. Get Docker Hub Token</h3>
+                <ul>
+                    <li>Login to Docker Hub</li>
+                    <li>Go to Account Settings > Security > New Access Token</li>
+                    <li>Create Access Token and copy it</li>
+                </ul>
+
+                <h3>3. Use Web Interface</h3>
+                <ul>
+                    <li>Visit <code>https://ac-all-sh.github.io/docker-builder/</code></li>
+                    <li>Enter source image (e.g., <code>nginx</code>)</li>
+                    <li>Enter output image (e.g., <code>yourusername/nginx</code>)</li>
+                    <li>Select architectures</li>
+                    <li>Click "Build Image"</li>
+                </ul>
+
+                <h2>API</h2>
+
+                <h3>GitHub Actions Workflow</h3>
+                <p>Trigger builds manually via GitHub Actions:</p>
+                <pre><code>gh workflow run build.yml \
+  -f image_source=nginx \
+  -f image_name=yourusername/nginx \
+  -f image_tag=latest \
+  -f architectures=amd64,arm64</code></pre>
+
+                <h3>Parameters</h3>
+                <table style="width:100%; border-collapse:collapse; margin-top:1rem;">
+                    <tr style="background:var(--bg-input);">
+                        <th style="padding:0.75rem; text-align:left; border:1px solid var(--border);">Parameter</th>
+                        <th style="padding:0.75rem; text-align:left; border:1px solid var(--border);">Description</th>
+                        <th style="padding:0.75rem; text-align:left; border:1px solid var(--border);">Required</th>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.75rem; border:1px solid var(--border);"><code>image_source</code></td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">Source image name</td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">Yes</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.75rem; border:1px solid var(--border);"><code>image_name</code></td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">Output image name</td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">Yes</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.75rem; border:1px solid var(--border);"><code>image_tag</code></td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">Image tag (default: latest)</td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">No</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.75rem; border:1px solid var(--border);"><code>architectures</code></td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">Target architectures (comma separated)</td>
+                        <td style="padding:0.75rem; border:1px solid var(--border);">Yes</td>
+                    </tr>
+                </table>
+
+                <h2>Supported Architectures</h2>
+                <ul>
+                    <li><code>amd64</code> - x86_64</li>
+                    <li><code>arm64</code> - 64-bit ARM</li>
+                    <li><code>arm</code> - 32-bit ARM (v7)</li>
+                </ul>
+
+                <h2>Pull Images</h2>
+                <pre><code># Pull specific architecture
+docker pull --platform linux/amd64 yourusername/myapp:latest
+
+# Pull specific tag
+docker pull yourusername/myapp:v1.0.0</code></pre>
+            </div>
+        </div>
+
+        <footer>
+            <p>Author: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions</p>
+        </footer>
+    </div>
+
+    <script>
+        function switchDocLang(lang) {
+            document.querySelectorAll('.doc-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('doc-' + lang).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

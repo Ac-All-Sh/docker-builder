@@ -3,50 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Docker Builder - Auto Build Docker Images</title>
+    <title>Docker Builder</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐳</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23667eea'><path d='M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.186m0 2.716h2.118a.186.186 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.186.186 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.887c0 .102.083.185.185.185m-2.964 0h2.119a.186.186 0 00.185-.185V9.006a.186.186 0 00-.185-.186H5.136a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.887c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z'/></svg>">
 </head>
 <body>
     <div class="container">
         <header>
-            <div class="logo">
-                <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor">
-                    <path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.186m0 2.716h2.118a.186.186 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.186.186 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.887c0 .102.083.185.185.185m-2.964 0h2.119a.186.186 0 00.185-.185V9.006a.186.186 0 00-.185-.186H5.136a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.887c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"/>
-                </svg>
-                <h1>Docker Builder</h1>
+            <div class="header-top">
+                <div class="logo">
+                    <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor">
+                        <path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.186m0 2.716h2.118a.186.186 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.186.186 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.887c0 .102.083.185.185.185m-2.964 0h2.119a.186.186 0 00.185-.185V9.006a.186.186 0 00-.185-.186H5.136a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.887c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"/>
+                    </svg>
+                    <h1>Docker Builder</h1>
+                </div>
+                <div class="header-controls">
+                    <a href="doc.html" class="nav-link">Docs</a>
+                    <button id="langToggle" class="lang-btn" onclick="toggleLanguage()">EN</button>
+                </div>
             </div>
-            <p class="subtitle">Auto Build Multi-Architecture Docker Images</p>
+            <p class="subtitle" data-i18n="subtitle">Auto Build Multi-Architecture Docker Images</p>
         </header>
 
         <main>
             <div class="builder-section">
                 <div class="form-group">
-                    <label for="imageSource">Image Source</label>
-                    <div class="input-hint">Enter Docker Hub image name or full image URL</div>
-                    <input type="text" id="imageSource" placeholder="e.g., nginx, ubuntu, redis or registry.example.com/app:tag">
+                    <label for="imageSource" data-i18n="source_label">Source Image</label>
+                    <div class="input-hint" data-i18n="source_hint">Enter Docker Hub image name or full image URL</div>
+                    <input type="text" id="imageSource" placeholder="e.g., nginx, ubuntu, redis">
                 </div>
 
                 <div class="form-group">
-                    <label for="imageName">Image Name (Output)</label>
-                    <div class="input-hint">Your Docker Hub username / image name</div>
+                    <label for="imageName" data-i18n="name_label">Output Image Name</label>
+                    <div class="input-hint" data-i18n="name_hint">Your Docker Hub username / image name</div>
                     <input type="text" id="imageName" placeholder="e.g., yourusername/myapp">
                 </div>
 
                 <div class="form-group">
-                    <label for="imageTag">Image Tag</label>
-                    <div class="input-hint">Leave empty to use "latest"</div>
-                    <input type="text" id="imageTag" placeholder="e.g., v1.0.0, latest">
+                    <label for="imageTag" data-i18n="tag_label">Image Tag</label>
+                    <div class="input-hint" data-i18n="tag_hint">Leave empty to use "latest"</div>
+                    <input type="text" id="imageTag" placeholder="e.g., v1.0.0">
                 </div>
 
                 <div class="form-group">
-                    <label>Target Architectures</label>
-                    <div class="input-hint">Select one or more architectures to build</div>
+                    <label data-i18n="arch_label">Target Architectures</label>
+                    <div class="input-hint" data-i18n="arch_hint">Select one or more architectures</div>
                     <div class="arch-grid">
                         <label class="arch-option">
                             <input type="checkbox" name="arch" value="amd64" checked>
                             <span class="arch-box">
-                                <span class="arch-icon">🖥️</span>
+                                <span class="arch-icon">x64</span>
                                 <span class="arch-name">amd64</span>
                                 <span class="arch-desc">x86_64</span>
                             </span>
@@ -54,7 +60,7 @@
                         <label class="arch-option">
                             <input type="checkbox" name="arch" value="arm64" checked>
                             <span class="arch-box">
-                                <span class="arch-icon">📱</span>
+                                <span class="arch-icon">ARM</span>
                                 <span class="arch-name">arm64</span>
                                 <span class="arch-desc">64-bit ARM</span>
                             </span>
@@ -62,7 +68,7 @@
                         <label class="arch-option">
                             <input type="checkbox" name="arch" value="arm">
                             <span class="arch-box">
-                                <span class="arch-icon">⌚</span>
+                                <span class="arch-icon">arm</span>
                                 <span class="arch-name">arm</span>
                                 <span class="arch-desc">32-bit ARM</span>
                             </span>
@@ -71,8 +77,7 @@
                 </div>
 
                 <button id="buildBtn" class="build-btn" onclick="startBuild()">
-                    <span class="btn-text">Build Image</span>
-                    <span class="btn-icon">🚀</span>
+                    <span class="btn-text" data-i18n="build_btn">Build Image</span>
                 </button>
             </div>
 
@@ -82,8 +87,8 @@
                         <div class="spinner"></div>
                     </div>
                     <div class="status-info">
-                        <h3>Building Image...</h3>
-                        <p id="statusText">Preparing build environment</p>
+                        <h3 data-i18n="status_building">Building Image...</h3>
+                        <p id="statusText" data-i18n="status_preparing">Preparing build environment</p>
                     </div>
                 </div>
                 <div class="status-progress">
@@ -93,51 +98,48 @@
                     <span id="progressText">0%</span>
                 </div>
                 <div id="buildLogs" class="build-logs">
-                    <div class="log-entry">Waiting to start...</div>
+                    <div class="log-entry" data-i18n="log_waiting">Waiting to start...</div>
                 </div>
             </div>
 
             <div id="buildResult" class="build-result hidden">
-                <div class="result-icon">✅</div>
-                <h3>Build Complete!</h3>
-                <p id="resultMessage">Your image has been pushed to Docker Hub</p>
+                <div class="result-icon">Done</div>
+                <h3 data-i18n="result_title">Build Complete!</h3>
+                <p id="resultMessage" data-i18n="result_message">Your image has been pushed to Docker Hub</p>
                 <div id="resultCommands" class="result-commands"></div>
-                <button class="build-btn secondary" onclick="resetForm()">Build Another Image</button>
+                <button class="build-btn secondary" onclick="resetForm()" data-i18n="build_another">Build Another Image</button>
             </div>
         </main>
 
         <div class="entertainment-section">
             <div class="entertainment-tabs">
-                <button class="tab-btn active" onclick="switchTab('ai')">AI News</button>
-                <button class="tab-btn" onclick="switchTab('game')">Mini Game</button>
-                <button class="tab-btn" onclick="switchTab('animation')">Animation</button>
+                <button class="tab-btn active" onclick="switchTab('ai')" data-i18n="tab_news">Tech News</button>
+                <button class="tab-btn" onclick="switchTab('game')" data-i18n="tab_game">Mini Game</button>
+                <button class="tab-btn" onclick="switchTab('animation')" data-i18n="tab_animation">Animation</button>
             </div>
             <div id="aiTab" class="tab-content active">
                 <div class="ai-news">
                     <div class="news-header">
-                        <span class="news-icon">🤖</span>
-                        <span>AI & Tech News</span>
+                        <span data-i18n="news_title">Tech News</span>
                     </div>
                     <div id="newsContent" class="news-content">
                         <div class="news-item">
-                            <span class="news-tag">AI</span>
-                            <p>Loading latest AI news...</p>
+                            <p data-i18n="news_loading">Loading news...</p>
                         </div>
                     </div>
-                    <button class="refresh-btn" onclick="loadNews()">Refresh News</button>
+                    <button class="refresh-btn" onclick="loadNews()" data-i18n="news_refresh">Refresh</button>
                 </div>
             </div>
             <div id="gameTab" class="tab-content">
                 <div class="game-container">
                     <div class="game-header">
-                        <span class="game-icon">🎮</span>
-                        <span>Snake Game</span>
-                        <span id="gameScore">Score: 0</span>
+                        <span data-i18n="game_title">Snake Game</span>
+                        <span id="gameScore" data-i18n="game_score">Score: 0</span>
                     </div>
                     <canvas id="gameCanvas" width="400" height="400"></canvas>
                     <div class="game-controls">
-                        <button onclick="startGame()">Start Game</button>
-                        <p>Use arrow keys or WASD to play</p>
+                        <button onclick="startGame()" data-i18n="game_start">Start Game</button>
+                        <p data-i18n="game_hint">Use arrow keys or WASD to play</p>
                     </div>
                 </div>
             </div>
@@ -163,14 +165,14 @@
                             <animate attributeName="rx" values="25;40;25" dur="2s" repeatCount="indefinite"/>
                         </rect>
                     </svg>
-                    <p class="animation-text">While waiting, enjoy this animation!</p>
+                    <p class="animation-text" data-i18n="animation_text">While waiting, enjoy this animation!</p>
                 </div>
             </div>
         </div>
     </div>
 
     <footer>
-        <p>Powered by GitHub Actions | Author: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a></p>
+        <p data-i18n="footer">Author: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions</p>
     </footer>
 
     <script src="script.js"></script>

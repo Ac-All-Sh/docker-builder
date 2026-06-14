@@ -1,31 +1,128 @@
-// Global variables
-let buildInProgress = false;
-let gameInterval = null;
-let snake = [];
-let food = {};
-let direction = 'right';
-let score = 0;
-let gameRunning = false;
+// Language translations
+const translations = {
+    zh: {
+        subtitle: '自动构建多架构 Docker 镜像',
+        source_label: '源镜像',
+        source_hint: '输入 Docker Hub 镜像名称或完整镜像地址',
+        name_label: '输出镜像名称',
+        name_hint: '你的 Docker Hub 用户名 / 镜像名',
+        tag_label: '镜像标签',
+        tag_hint: '留空则使用 "latest"',
+        arch_label: '目标架构',
+        arch_hint: '选择一个或多个架构',
+        build_btn: '开始构建',
+        status_building: '正在构建...',
+        status_preparing: '准备构建环境',
+        log_waiting: '等待开始...',
+        result_title: '构建完成!',
+        result_message: '镜像已推送到 Docker Hub',
+        build_another: '构建其他镜像',
+        tab_news: '技术资讯',
+        tab_game: '小游戏',
+        tab_animation: '动画',
+        news_title: '技术资讯',
+        news_loading: '加载中...',
+        news_refresh: '刷新',
+        game_title: '贪吃蛇',
+        game_score: '得分: 0',
+        game_start: '开始游戏',
+        game_hint: '使用方向键或 WASD 控制',
+        animation_text: '等待构建时，欣赏动画',
+        footer: '作者: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions'
+    },
+    en: {
+        subtitle: 'Auto Build Multi-Architecture Docker Images',
+        source_label: 'Source Image',
+        source_hint: 'Enter Docker Hub image name or full image URL',
+        name_label: 'Output Image Name',
+        name_hint: 'Your Docker Hub username / image name',
+        tag_label: 'Image Tag',
+        tag_hint: 'Leave empty to use "latest"',
+        arch_label: 'Target Architectures',
+        arch_hint: 'Select one or more architectures',
+        build_btn: 'Build Image',
+        status_building: 'Building Image...',
+        status_preparing: 'Preparing build environment',
+        log_waiting: 'Waiting to start...',
+        result_title: 'Build Complete!',
+        result_message: 'Your image has been pushed to Docker Hub',
+        build_another: 'Build Another Image',
+        tab_news: 'Tech News',
+        tab_game: 'Mini Game',
+        tab_animation: 'Animation',
+        news_title: 'Tech News',
+        news_loading: 'Loading news...',
+        news_refresh: 'Refresh',
+        game_title: 'Snake Game',
+        game_score: 'Score: 0',
+        game_start: 'Start Game',
+        game_hint: 'Use arrow keys or WASD to play',
+        animation_text: 'While waiting, enjoy this animation!',
+        footer: 'Author: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions'
+    }
+};
+
+let currentLang = 'zh';
 
 // AI News data
-const aiNews = [
-    { tag: 'AI', title: 'GPT-5 Released with Enhanced Reasoning', content: 'OpenAI announces GPT-5 with significant improvements in logical reasoning and code generation capabilities.' },
-    { tag: 'Docker', title: 'Docker Desktop 4.25 Released', content: 'New features include improved performance for large container images and better integration with Kubernetes.' },
-    { tag: 'Cloud', title: 'AWS Lambda Adds ARM64 Support', content: 'AWS Lambda now supports ARM64 architecture for better price-performance ratio.' },
-    { tag: 'Security', title: 'Critical Vulnerability Found in OpenSSL', content: 'New CVE-2024-XXXX affects OpenSSL 3.x, users urged to update immediately.' },
-    { tag: 'DevOps', title: 'GitHub Actions Improves Caching', content: 'New caching strategies reduce build times by up to 40% for CI/CD pipelines.' },
-    { tag: 'Kubernetes', title: 'K8s 1.29 Released', content: 'Kubernetes 1.29 introduces new features for improved cluster management and security.' },
-    { tag: 'AI', title: 'Google Gemini Ultra Outperforms GPT-4', content: 'Google claims Gemini Ultra achieves state-of-the-art results on multiple benchmarks.' },
-    { tag: 'Linux', title: 'Linux Kernel 6.8 Released', content: 'New kernel version includes improved hardware support and performance optimizations.' },
-    { tag: 'Security', title: 'Ransomware Attack Targets Docker Registries', content: 'Multiple Docker Hub accounts compromised, users advised to enable 2FA.' },
-    { tag: 'DevOps', title: 'Terraform 1.7 Introduces Provider-Less State', content: 'New feature allows managing resources without requiring provider plugins.' }
-];
+const aiNews = {
+    zh: [
+        { tag: 'AI', title: 'GPT-5 发布，推理能力大幅提升', content: 'OpenAI 宣布 GPT-5，在逻辑推理和代码生成方面有显著改进。' },
+        { tag: 'Docker', title: 'Docker Desktop 4.25 发布', content: '新功能包括改进的大型容器镜像性能和更好的 Kubernetes 集成。' },
+        { tag: 'Cloud', title: 'AWS Lambda 新增 ARM64 支持', content: 'AWS Lambda 现在支持 ARM64 架构，提供更好的性价比。' },
+        { tag: 'Security', title: 'OpenSSL 发现严重漏洞', content: '新 CVE-2024-XXXX 影响 OpenSSL 3.x，用户需立即更新。' },
+        { tag: 'DevOps', title: 'GitHub Actions 改进缓存', content: '新的缓存策略使 CI/CD 管道构建时间减少高达 40%。' },
+        { tag: 'Kubernetes', title: 'K8s 1.29 发布', content: 'Kubernetes 1.29 引入了改进集群管理和安全性的新功能。' },
+        { tag: 'AI', title: 'Google Gemini Ultra 超越 GPT-4', content: 'Google 声称 Gemini Ultra 在多个基准测试中达到最先进水平。' },
+        { tag: 'Linux', title: 'Linux 内核 6.8 发布', content: '新内核版本包含改进的硬件支持和性能优化。' },
+        { tag: 'Security', title: '勒索软件攻击瞄准 Docker 仓库', content: '多个 Docker Hub 账户被入侵，建议用户启用双因素认证。' },
+        { tag: 'DevOps', title: 'Terraform 1.7 引入无 Provider 状态', content: '新功能允许在不需要 Provider 插件的情况下管理资源。' }
+    ],
+    en: [
+        { tag: 'AI', title: 'GPT-5 Released with Enhanced Reasoning', content: 'OpenAI announces GPT-5 with significant improvements in logical reasoning and code generation.' },
+        { tag: 'Docker', title: 'Docker Desktop 4.25 Released', content: 'New features include improved performance for large container images and better Kubernetes integration.' },
+        { tag: 'Cloud', title: 'AWS Lambda Adds ARM64 Support', content: 'AWS Lambda now supports ARM64 architecture for better price-performance ratio.' },
+        { tag: 'Security', title: 'Critical Vulnerability Found in OpenSSL', content: 'New CVE-2024-XXXX affects OpenSSL 3.x, users urged to update immediately.' },
+        { tag: 'DevOps', title: 'GitHub Actions Improves Caching', content: 'New caching strategies reduce build times by up to 40% for CI/CD pipelines.' },
+        { tag: 'Kubernetes', title: 'K8s 1.29 Released', content: 'Kubernetes 1.29 introduces new features for improved cluster management and security.' },
+        { tag: 'AI', title: 'Google Gemini Ultra Outperforms GPT-4', content: 'Google claims Gemini Ultra achieves state-of-the-art results on multiple benchmarks.' },
+        { tag: 'Linux', title: 'Linux Kernel 6.8 Released', content: 'New kernel version includes improved hardware support and performance optimizations.' },
+        { tag: 'Security', title: 'Ransomware Attack Targets Docker Registries', content: 'Multiple Docker Hub accounts compromised, users advised to enable 2FA.' },
+        { tag: 'DevOps', title: 'Terraform 1.7 Introduces Provider-Less State', content: 'New feature allows managing resources without requiring provider plugins.' }
+    ]
+};
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadNews();
     initGame();
+    updateLanguage();
 });
+
+// Language toggle
+function toggleLanguage() {
+    currentLang = currentLang === 'zh' ? 'en' : 'zh';
+    document.getElementById('langToggle').textContent = currentLang === 'zh' ? 'EN' : '中文';
+    document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+    updateLanguage();
+    loadNews();
+}
+
+function updateLanguage() {
+    const t = translations[currentLang];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key]) {
+            if (el.tagName === 'P' || el.tagName === 'SPAN' || el.tagName === 'H3') {
+                el.textContent = t[key];
+            } else if (el.tagName === 'A') {
+                el.innerHTML = t[key];
+            } else {
+                el.textContent = t[key];
+            }
+        }
+    });
+}
 
 // Tab switching
 function switchTab(tabName) {
@@ -39,13 +136,14 @@ function switchTab(tabName) {
 // Load AI News
 function loadNews() {
     const newsContent = document.getElementById('newsContent');
-    const shuffled = [...aiNews].sort(() => Math.random() - 0.5).slice(0, 4);
+    const news = aiNews[currentLang];
+    const shuffled = [...news].sort(() => Math.random() - 0.5).slice(0, 4);
 
-    newsContent.innerHTML = shuffled.map(news => `
+    newsContent.innerHTML = shuffled.map(n => `
         <div class="news-item">
-            <span class="news-tag">${news.tag}</span>
-            <h4>${news.title}</h4>
-            <p>${news.content}</p>
+            <span class="news-tag">${n.tag}</span>
+            <h4>${n.title}</h4>
+            <p>${n.content}</p>
         </div>
     `).join('');
 }
@@ -60,55 +158,55 @@ async function startBuild() {
     const archCheckboxes = document.querySelectorAll('input[name="arch"]:checked');
     const architectures = Array.from(archCheckboxes).map(cb => cb.value);
 
-    // Validation
+    const t = translations[currentLang];
+
     if (!imageSource) {
-        alert('Please enter an image source');
+        alert(currentLang === 'zh' ? '请输入源镜像名称' : 'Please enter an image source');
         return;
     }
 
     if (!imageName) {
-        alert('Please enter an image name');
+        alert(currentLang === 'zh' ? '请输入输出镜像名称' : 'Please enter an image name');
         return;
     }
 
     if (architectures.length === 0) {
-        alert('Please select at least one architecture');
+        alert(currentLang === 'zh' ? '请选择至少一个架构' : 'Please select at least one architecture');
         return;
     }
 
     buildInProgress = true;
 
-    // Show build status
     document.getElementById('buildStatus').classList.remove('hidden');
     document.getElementById('buildResult').classList.add('hidden');
     document.getElementById('buildBtn').disabled = true;
-    document.getElementById('statusText').textContent = 'Preparing build environment...';
+    document.getElementById('statusText').textContent = t.status_preparing;
     document.getElementById('progressFill').style.width = '10%';
     document.getElementById('progressText').textContent = '10%';
 
     const logs = document.getElementById('buildLogs');
-    logs.innerHTML = '<div class="log-entry">Starting build process...</div>';
+    logs.innerHTML = `<div class="log-entry">${currentLang === 'zh' ? '开始构建...' : 'Starting build...'}</div>`;
 
     try {
-        // Simulate build steps
         await simulateBuild(logs, imageName, imageTag, architectures);
     } catch (error) {
         logs.innerHTML += `<div class="log-entry error">Error: ${error.message}</div>`;
-        document.getElementById('statusText').textContent = 'Build failed!';
+        document.getElementById('statusText').textContent = currentLang === 'zh' ? '构建失败!' : 'Build failed!';
         document.getElementById('progressFill').style.width = '100%';
         document.getElementById('progressText').textContent = 'Failed';
     }
 }
 
 async function simulateBuild(logs, imageName, imageTag, architectures) {
+    const t = translations[currentLang];
     const steps = [
-        { text: 'Validating image source...', progress: 15, delay: 500 },
-        { text: 'Pulling source image...', progress: 25, delay: 1000 },
-        { text: `Building for ${architectures[0]}...`, progress: 40, delay: 1500 },
-        { text: `Building for ${architectures.length > 1 ? architectures[1] : 'arm64'}...`, progress: 55, delay: 1500 },
-        { text: 'Creating multi-arch manifest...', progress: 70, delay: 1000 },
-        { text: 'Pushing to Docker Hub...', progress: 85, delay: 1500 },
-        { text: 'Cleaning up...', progress: 95, delay: 500 },
+        { text: currentLang === 'zh' ? '验证镜像源...' : 'Validating image source...', progress: 15, delay: 500 },
+        { text: currentLang === 'zh' ? '拉取源镜像...' : 'Pulling source image...', progress: 25, delay: 1000 },
+        { text: `${currentLang === 'zh' ? '构建' : 'Building'} ${architectures[0]}...`, progress: 40, delay: 1500 },
+        { text: `${currentLang === 'zh' ? '构建' : 'Building'} ${architectures.length > 1 ? architectures[1] : architectures[0]}...`, progress: 55, delay: 1500 },
+        { text: currentLang === 'zh' ? '创建多架构清单...' : 'Creating multi-arch manifest...', progress: 70, delay: 1000 },
+        { text: currentLang === 'zh' ? '推送到 Docker Hub...' : 'Pushing to Docker Hub...', progress: 85, delay: 1500 },
+        { text: currentLang === 'zh' ? '清理中...' : 'Cleaning up...', progress: 95, delay: 500 },
     ];
 
     for (const step of steps) {
@@ -120,26 +218,19 @@ async function simulateBuild(logs, imageName, imageTag, architectures) {
         await sleep(step.delay);
     }
 
-    // Success
-    logs.innerHTML += `<div class="log-entry success">Build completed successfully!</div>`;
+    logs.innerHTML += `<div class="log-entry success">${currentLang === 'zh' ? '构建完成!' : 'Build completed!'}</div>`;
     document.getElementById('progressFill').style.width = '100%';
     document.getElementById('progressText').textContent = '100%';
-    document.getElementById('statusText').textContent = 'Build complete!';
+    document.getElementById('statusText').textContent = t.status_building;
 
     await sleep(500);
 
-    // Show result
     document.getElementById('buildStatus').classList.add('hidden');
     document.getElementById('buildResult').classList.remove('hidden');
-    document.getElementById('resultMessage').textContent = `Your image has been pushed to Docker Hub`;
+    document.getElementById('resultMessage').textContent = t.result_message;
 
-    const pullCommand = architectures.length > 1
-        ? `docker pull --platform ${architectures[0]} ${imageName}:${imageTag}`
-        : `docker pull ${imageName}:${imageTag}`;
-
-    document.getElementById('resultCommands').innerHTML = `
-        <code>${pullCommand}</code>
-    `;
+    const pullCommand = `docker pull ${imageName}:${imageTag}`;
+    document.getElementById('resultCommands').innerHTML = `<code>${pullCommand}</code>`;
 
     document.getElementById('buildBtn').disabled = false;
     buildInProgress = false;
@@ -148,7 +239,7 @@ async function simulateBuild(logs, imageName, imageTag, architectures) {
 function resetForm() {
     document.getElementById('buildStatus').classList.add('hidden');
     document.getElementById('buildResult').classList.add('hidden');
-    document.getElementById('buildLogs').innerHTML = '<div class="log-entry">Waiting to start...</div>';
+    document.getElementById('buildLogs').innerHTML = `<div class="log-entry">${translations[currentLang].log_waiting}</div>`;
 }
 
 function sleep(ms) {
@@ -156,6 +247,13 @@ function sleep(ms) {
 }
 
 // Snake Game
+let gameInterval = null;
+let snake = [];
+let food = {};
+let direction = 'right';
+let score = 0;
+let gameRunning = false;
+
 function initGame() {
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -164,28 +262,15 @@ function initGame() {
 
     document.addEventListener('keydown', (e) => {
         if (!gameRunning) return;
-
         switch(e.key) {
-            case 'ArrowUp':
-            case 'w':
-            case 'W':
-                if (direction !== 'down') direction = 'up';
-                break;
-            case 'ArrowDown':
-            case 's':
-            case 'S':
-                if (direction !== 'up') direction = 'down';
-                break;
-            case 'ArrowLeft':
-            case 'a':
-            case 'A':
-                if (direction !== 'right') direction = 'left';
-                break;
-            case 'ArrowRight':
-            case 'd':
-            case 'D':
-                if (direction !== 'left') direction = 'right';
-                break;
+            case 'ArrowUp': case 'w': case 'W':
+                if (direction !== 'down') direction = 'up'; break;
+            case 'ArrowDown': case 's': case 'S':
+                if (direction !== 'up') direction = 'down'; break;
+            case 'ArrowLeft': case 'a': case 'A':
+                if (direction !== 'right') direction = 'left'; break;
+            case 'ArrowRight': case 'd': case 'D':
+                if (direction !== 'left') direction = 'right'; break;
         }
     });
 
@@ -194,16 +279,14 @@ function initGame() {
         direction = 'right';
         score = 0;
         gameRunning = true;
-        document.getElementById('gameScore').textContent = 'Score: 0';
+        document.getElementById('gameScore').textContent = translations[currentLang].game_score.replace('0', '0');
         spawnFood();
         if (gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => gameLoop(ctx, gridSize, tileCount, canvas), 150);
     };
 
     function gameLoop(ctx, gridSize, tileCount, canvas) {
-        // Update snake position
         const head = { ...snake[0] };
-
         switch(direction) {
             case 'up': head.y--; break;
             case 'down': head.y++; break;
@@ -211,40 +294,30 @@ function initGame() {
             case 'right': head.x++; break;
         }
 
-        // Check wall collision
         if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
-            endGame();
-            return;
+            endGame(); return;
         }
-
-        // Check self collision
         if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
-            endGame();
-            return;
+            endGame(); return;
         }
 
         snake.unshift(head);
-
-        // Check food collision
         if (head.x === food.x && head.y === food.y) {
             score += 10;
-            document.getElementById('gameScore').textContent = 'Score: ' + score;
+            document.getElementById('gameScore').textContent = translations[currentLang].game_score.replace('0', score);
             spawnFood();
         } else {
             snake.pop();
         }
 
-        // Draw
         ctx.fillStyle = '#0f172a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Draw snake
         snake.forEach((segment, index) => {
             ctx.fillStyle = index === 0 ? '#667eea' : '#764ba2';
             ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
         });
 
-        // Draw food
         ctx.fillStyle = '#f093fb';
         ctx.beginPath();
         ctx.arc(food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2, gridSize / 2 - 2, 0, Math.PI * 2);
@@ -267,9 +340,8 @@ function initGame() {
         ctx.fillStyle = '#fff';
         ctx.font = '24px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Game Over!', ctx.canvas.width / 2, ctx.canvas.height / 2 - 20);
+        ctx.fillText(currentLang === 'zh' ? '游戏结束!' : 'Game Over!', ctx.canvas.width / 2, ctx.canvas.height / 2 - 20);
         ctx.font = '16px Arial';
-        ctx.fillText('Score: ' + score, ctx.canvas.width / 2, ctx.canvas.height / 2 + 10);
-        ctx.fillText('Click "Start Game" to play again', ctx.canvas.width / 2, ctx.canvas.height / 2 + 40);
+        ctx.fillText((currentLang === 'zh' ? '得分: ' : 'Score: ') + score, ctx.canvas.width / 2, ctx.canvas.height / 2 + 10);
     }
 }
