@@ -23,6 +23,7 @@ Docker Builder is a web-based tool for automatically building multi-architecture
 2. Visit https://ac-all-sh.github.io/docker-builder/
 3. Enter source image, output image name, and select architectures
 4. Click "Build Image"
+5. Build artifacts will be saved to GitHub Releases
 
 ## API
 

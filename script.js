@@ -38,6 +38,7 @@ const translations = {
         history_date: '时间',
         history_action: '操作',
         history_empty: '暂无构建记录',
+        api_notice: '注意：要使用自动构建功能，需要配置具有 repo 权限的 GitHub Token。没有 Token 时，构建将通过手动触发。',
         footer: '作者: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions'
     },
     en: {
@@ -78,6 +79,7 @@ const translations = {
         history_date: 'Date',
         history_action: 'Action',
         history_empty: 'No build history found',
+        api_notice: 'Note: To use automatic builds, you need to configure a GitHub Token with repo scope. Without a token, builds will be triggered manually.',
         footer: 'Author: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions'
     }
 };
@@ -214,6 +216,14 @@ async function startBuild() {
         return;
     }
 
+    // Check if source image is architecture-specific
+    if (imageSource.includes('_amd64') || imageSource.includes('_arm64') || imageSource.includes('_arm')) {
+        const msg = currentLang === 'zh' 
+            ? '检测到源镜像是特定架构的镜像。建议只选择对应的架构。\n\n是否继续？'
+            : 'Source image appears to be architecture-specific. Consider selecting only the matching architecture.\n\nContinue anyway?';
+        if (!confirm(msg)) return;
+    }
+
     buildInProgress = true;
 
     // Show entertainment section
@@ -227,55 +237,86 @@ async function startBuild() {
     document.getElementById('progressText').textContent = '10%';
 
     const logs = document.getElementById('buildLogs');
-    logs.innerHTML = `<div class="log-entry">${currentLang === 'zh' ? '开始构建...' : 'Starting build...'}</div>`;
+    logs.innerHTML = `<div class="log-entry">${currentLang === 'zh' ? '正在提交构建任务...' : 'Submitting build task...'}</div>`;
 
     try {
-        await simulateBuild(logs, imageName, imageTag, architectures);
+        // Trigger GitHub Actions workflow
+        const workflowRun = await triggerWorkflow(imageSource, imageName, imageTag, architectures);
+        
+        if (workflowRun) {
+            logs.innerHTML += `<div class="log-entry success">${currentLang === 'zh' ? '构建任务已提交!' : 'Build task submitted!'}</div>`;
+            logs.innerHTML += `<div class="log-entry">${currentLang === 'zh' ? 'Workflow ID: ' + workflowRun.id : 'Workflow ID: ' + workflowRun.id}</div>`;
+            logs.innerHTML += `<div class="log-entry">${currentLang === 'zh' ? '请在 GitHub Actions 查看构建进度' : 'Check GitHub Actions for build progress'}</div>`;
+            
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('progressText').textContent = '100%';
+            document.getElementById('statusText').textContent = currentLang === 'zh' ? '构建任务已提交' : 'Build task submitted';
+
+            await sleep(1000);
+
+            document.getElementById('buildStatus').classList.add('hidden');
+            document.getElementById('buildResult').classList.remove('hidden');
+            document.getElementById('resultMessage').textContent = currentLang === 'zh' 
+                ? '构建任务已提交到 GitHub Actions，请稍后查看结果'
+                : 'Build task submitted to GitHub Actions, check results later';
+            document.getElementById('resultCommands').innerHTML = `
+                <code>${currentLang === 'zh' ? '查看构建状态: ' : 'View build: '}<a href="https://github.com/Ac-All-Sh/docker-builder/actions" target="_blank">GitHub Actions</a></code>
+            `;
+        }
     } catch (error) {
         logs.innerHTML += `<div class="log-entry error">Error: ${error.message}</div>`;
-        document.getElementById('statusText').textContent = currentLang === 'zh' ? '构建失败!' : 'Build failed!';
+        document.getElementById('statusText').textContent = currentLang === 'zh' ? '提交失败!' : 'Submission failed!';
         document.getElementById('progressFill').style.width = '100%';
         document.getElementById('progressText').textContent = 'Failed';
     }
-}
-
-async function simulateBuild(logs, imageName, imageTag, architectures) {
-    const t = translations[currentLang];
-    const steps = [
-        { text: currentLang === 'zh' ? '验证镜像源...' : 'Validating image source...', progress: 15, delay: 500 },
-        { text: currentLang === 'zh' ? '拉取源镜像...' : 'Pulling source image...', progress: 25, delay: 1000 },
-        { text: `${currentLang === 'zh' ? '构建' : 'Building'} ${architectures[0]}...`, progress: 40, delay: 1500 },
-        { text: `${currentLang === 'zh' ? '构建' : 'Building'} ${architectures.length > 1 ? architectures[1] : architectures[0]}...`, progress: 55, delay: 1500 },
-        { text: currentLang === 'zh' ? '创建多架构清单...' : 'Creating multi-arch manifest...', progress: 70, delay: 1000 },
-        { text: currentLang === 'zh' ? '推送到 Docker Hub...' : 'Pushing to Docker Hub...', progress: 85, delay: 1500 },
-        { text: currentLang === 'zh' ? '清理中...' : 'Cleaning up...', progress: 95, delay: 500 },
-    ];
-
-    for (const step of steps) {
-        document.getElementById('statusText').textContent = step.text;
-        document.getElementById('progressFill').style.width = step.progress + '%';
-        document.getElementById('progressText').textContent = step.progress + '%';
-        logs.innerHTML += `<div class="log-entry">${step.text}</div>`;
-        logs.scrollTop = logs.scrollHeight;
-        await sleep(step.delay);
-    }
-
-    logs.innerHTML += `<div class="log-entry success">${currentLang === 'zh' ? '构建完成!' : 'Build completed!'}</div>`;
-    document.getElementById('progressFill').style.width = '100%';
-    document.getElementById('progressText').textContent = '100%';
-    document.getElementById('statusText').textContent = t.status_building;
-
-    await sleep(500);
-
-    document.getElementById('buildStatus').classList.add('hidden');
-    document.getElementById('buildResult').classList.remove('hidden');
-    document.getElementById('resultMessage').textContent = t.result_message;
-
-    const pullCommand = `docker pull ${imageName}:${imageTag}`;
-    document.getElementById('resultCommands').innerHTML = `<code>${pullCommand}</code>`;
 
     document.getElementById('buildBtn').disabled = false;
     buildInProgress = false;
+}
+
+// Trigger GitHub Actions workflow via API
+async function triggerWorkflow(imageSource, imageName, imageTag, architectures) {
+    // Note: This requires a GitHub token with repo scope
+    // For public repos, we can use the dispatch endpoint
+    const token = ''; // User needs to configure this
+    
+    const url = 'https://api.github.com/repos/Ac-All-Sh/docker-builder/actions/workflows/build.yml/dispatches';
+    
+    const body = {
+        ref: 'main',
+        inputs: {
+            image_source: imageSource,
+            image_name: imageName,
+            image_tag: imageTag,
+            architectures: architectures.join(',')
+        }
+    };
+
+    const headers = {
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+    };
+
+    if (token) {
+        headers['Authorization'] = `token ${token}`;
+    }
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(body)
+    });
+
+    if (response.status === 204) {
+        return { id: 'manual-trigger-' + Date.now() };
+    } else if (response.status === 404) {
+        throw new Error(currentLang === 'zh' 
+            ? '无法触发工作流。请确保仓库公开或配置了 GitHub Token。' 
+            : 'Cannot trigger workflow. Ensure repo is public or configure GitHub Token.');
+    } else {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to trigger workflow');
+    }
 }
 
 function resetForm() {
@@ -313,23 +354,31 @@ function hideHistory() {
 // Load Build History from GitHub API
 async function loadBuildHistory() {
     try {
-        const response = await fetch('https://api.github.com/repos/Ac-All-Sh/docker-builder/actions/runs?per_page=100');
+        const response = await fetch('https://api.github.com/repos/Ac-All-Sh/docker-builder/actions/runs?per_page=100&status=completed');
         const data = await response.json();
 
         if (data.workflow_runs && data.workflow_runs.length > 0) {
-            allBuilds = data.workflow_runs.map(run => ({
-                id: run.id,
-                name: extractImageName(run),
-                tag: extractTag(run),
-                status: run.status,
-                conclusion: run.conclusion,
-                date: new Date(run.created_at).toLocaleString(),
-                url: run.html_url
-            }));
+            // Only show successful builds
+            allBuilds = data.workflow_runs
+                .filter(run => run.conclusion === 'success')
+                .map(run => ({
+                    id: run.id,
+                    name: extractImageName(run),
+                    tag: extractTag(run),
+                    status: run.status,
+                    conclusion: run.conclusion,
+                    date: new Date(run.created_at).toLocaleString(),
+                    url: run.html_url
+                }));
 
-            renderHistoryTable();
-            document.getElementById('historyLoading').classList.add('hidden');
-            document.getElementById('historyContent').classList.remove('hidden');
+            if (allBuilds.length > 0) {
+                renderHistoryTable();
+                document.getElementById('historyLoading').classList.add('hidden');
+                document.getElementById('historyContent').classList.remove('hidden');
+            } else {
+                document.getElementById('historyLoading').classList.add('hidden');
+                document.getElementById('historyEmpty').classList.remove('hidden');
+            }
         } else {
             document.getElementById('historyLoading').classList.add('hidden');
             document.getElementById('historyEmpty').classList.remove('hidden');

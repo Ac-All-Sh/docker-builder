@@ -25,6 +25,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -65,27 +67,21 @@ jobs:
             esac
           done
 
+          # Generate version tag
+          VERSION=$(date +%Y%m%d-%H%M%S)
+
           echo "image_source=$IMAGE_SOURCE" >> $GITHUB_OUTPUT
           echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
           echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
           echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "architectures=$ARCHITECTURES" >> $GITHUB_OUTPUT
 
           echo "=== Build Configuration ==="
           echo "Source: $IMAGE_SOURCE"
           echo "Output: $IMAGE_NAME:$IMAGE_TAG"
           echo "Platforms: $PLATFORMS"
-
-      - name: Pull and retag image
-        run: |
-          IMAGE_SOURCE="${{ steps.parse.outputs.image_source }}"
-          IMAGE_NAME="${{ steps.parse.outputs.image_name }}"
-          IMAGE_TAG="${{ steps.parse.outputs.image_tag }}"
-
-          echo "Pulling source image: $IMAGE_SOURCE"
-          docker pull "$IMAGE_SOURCE" || true
-
-          echo "Tagging image..."
-          docker tag "$IMAGE_SOURCE" "$IMAGE_NAME:$IMAGE_TAG" || true
+          echo "Version: $VERSION"
 
       - name: Build and push multi-arch image
         uses: docker/build-push-action@v5
@@ -96,22 +92,66 @@ jobs:
           push: true
           tags: |
             ${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.image_tag }}
+            ${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.version }}
           build-args: |
             SOURCE_IMAGE=${{ steps.parse.outputs.image_source }}
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.parse.outputs.version }}
+          name: "${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.image_tag }}"
+          body: |
+            ## Docker Image Build Complete
+            
+            **Source Image:** `${{ steps.parse.outputs.image_source }}`
+            
+            **Output Image:** `${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.image_tag }}`
+            
+            **Version:** `${{ steps.parse.outputs.version }}`
+            
+            **Architectures:** `${{ steps.parse.outputs.architectures }}`
+            
+            ### Pull Commands
+            
+            ```bash
+            # Pull latest
+            docker pull ${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.image_tag }}
+            
+            # Pull specific version
+            docker pull ${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.version }}
+            
+            # Pull specific architecture
+            docker pull --platform linux/amd64 ${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.image_tag }}
+            ```
+            
+            ### Build Info
+            
+            - Build Time: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+            - Workflow: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate summary
         run: |
           IMAGE_NAME="${{ steps.parse.outputs.image_name }}"
           IMAGE_TAG="${{ steps.parse.outputs.image_tag }}"
           PLATFORMS="${{ steps.parse.outputs.platforms }}"
+          VERSION="${{ steps.parse.outputs.version }}"
 
           echo "## Docker Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Source Image:** \`${{ github.event.inputs.image_source }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Output Image:** \`${IMAGE_NAME}:${IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${VERSION}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Platforms:** \`${PLATFORMS}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Pull Command" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Release" >> $GITHUB_STEP_SUMMARY
+          echo "View release: [${VERSION}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${VERSION})" >> $GITHUB_STEP_SUMMARY
