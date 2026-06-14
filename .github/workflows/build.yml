@@ -96,6 +96,47 @@ jobs:
           build-args: |
             SOURCE_IMAGE=${{ steps.parse.outputs.image_source }}
 
+      - name: Export images as tar files
+        run: |
+          IMAGE_NAME="${{ steps.parse.outputs.image_name }}"
+          IMAGE_TAG="${{ steps.parse.outputs.image_tag }}"
+          ARCHITECTURES="${{ steps.parse.outputs.architectures }}"
+          VERSION="${{ steps.parse.outputs.version }}"
+
+          mkdir -p images
+
+          IFS=',' read -ra ARCH_ARRAY <<< "$ARCHITECTURES"
+          for arch in "${ARCH_ARRAY[@]}"; do
+            PLATFORM=""
+            case $arch in
+              amd64) PLATFORM="linux/amd64" ;;
+              arm64) PLATFORM="linux/arm64" ;;
+              arm) PLATFORM="linux/arm/v7" ;;
+            esac
+
+            echo "Exporting image for $arch ($PLATFORM)..."
+            
+            # Export image to tar
+            docker buildx build \
+              --platform "$PLATFORM" \
+              --load \
+              -t "${IMAGE_NAME}:${IMAGE_TAG}-${arch}" \
+              --build-arg SOURCE_IMAGE="${{ steps.parse.outputs.image_source }}" \
+              .
+
+            # Save to tar file
+            docker save "${IMAGE_NAME}:${IMAGE_TAG}-${arch}" -o "images/${IMAGE_NAME##*/}-${IMAGE_TAG}-${arch}.tar"
+            
+            echo "Exported: images/${IMAGE_NAME##*/}-${IMAGE_TAG}-${arch}.tar"
+          done
+
+          # Create multi-arch manifest tar
+          docker save "${IMAGE_NAME}:${IMAGE_TAG}" -o "images/${IMAGE_NAME##*/}-${IMAGE_TAG}-manifest.tar" 2>/dev/null || true
+
+          # List all exported files
+          echo "=== Exported Files ==="
+          ls -lh images/
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -103,32 +144,57 @@ jobs:
           name: "${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.image_tag }}"
           body: |
             ## Docker Image Build Complete
-            
+
             **Source Image:** `${{ steps.parse.outputs.image_source }}`
-            
+
             **Output Image:** `${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.image_tag }}`
-            
+
             **Version:** `${{ steps.parse.outputs.version }}`
-            
+
             **Architectures:** `${{ steps.parse.outputs.architectures }}`
-            
-            ### Pull Commands
-            
+
+            ---
+
+            ### Online Pull Commands
+
             ```bash
-            # Pull latest
+            # Pull latest tag
             docker pull ${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.image_tag }}
-            
+
             # Pull specific version
             docker pull ${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.version }}
-            
+
             # Pull specific architecture
             docker pull --platform linux/amd64 ${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.image_tag }}
+            docker pull --platform linux/arm64 ${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.image_tag }}
+            docker pull --platform linux/arm/v7 ${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.image_tag }}
             ```
-            
+
+            ---
+
+            ### Offline Image Files (tar)
+
+            Download the tar file for offline import:
+
+            ```bash
+            # Import from tar file
+            docker load -i ${{ steps.parse.outputs.image_name }}-${{ steps.parse.outputs.image_tag }}-amd64.tar
+            docker load -i ${{ steps.parse.outputs.image_name }}-${{ steps.parse.outputs.image_tag }}-arm64.tar
+            docker load -i ${{ steps.parse.outputs.image_name }}-${{ steps.parse.outputs.image_tag }}-arm.tar
+            docker load -i ${{ steps.parse.outputs.image_name }}-${{ steps.parse.outputs.image_tag }}-manifest.tar
+
+            # Then tag and push
+            docker tag ${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.image_tag }}-amd64 ${{ steps.parse.outputs.image_name }}:${{ steps.parse.outputs.image_tag }}
+            ```
+
+            ---
+
             ### Build Info
-            
+
             - Build Time: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
             - Workflow: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          files: |
+            images/*
           draft: false
           prerelease: false
         env:
@@ -148,9 +214,15 @@ jobs:
           echo "**Version:** \`${VERSION}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Platforms:** \`${PLATFORMS}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Pull Command" >> $GITHUB_STEP_SUMMARY
+          echo "### Pull Commands" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Offline Files" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker load -i ${IMAGE_NAME##*/}-${IMAGE_TAG}-amd64.tar" >> $GITHUB_STEP_SUMMARY
+          echo "docker load -i ${IMAGE_NAME##*/}-${IMAGE_TAG}-arm64.tar" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Release" >> $GITHUB_STEP_SUMMARY
