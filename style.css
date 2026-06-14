@@ -471,9 +471,7 @@ input[type="text"]::placeholder {
     background: var(--border);
 }
 
-.hidden {
-    display: none !important;
-}
+
 
 .game-container {
     text-align: center;
