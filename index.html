@@ -76,9 +76,14 @@
                     </div>
                 </div>
 
-                <button id="buildBtn" class="build-btn" onclick="startBuild()">
-                    <span class="btn-text" data-i18n="build_btn">Build Image</span>
-                </button>
+                <div class="button-group">
+                    <button id="buildBtn" class="build-btn" onclick="startBuild()">
+                        <span class="btn-text" data-i18n="build_btn">Build Image</span>
+                    </button>
+                    <button class="build-btn secondary" onclick="showHistory()">
+                        <span class="btn-text" data-i18n="history_btn">Build History</span>
+                    </button>
+                </div>
             </div>
 
             <div id="buildStatus" class="build-status hidden">
@@ -171,10 +176,46 @@
         </div>
     </div>
 
+    <!-- History Modal -->
+    <div id="historyModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-i18n="history_title">Build History</h2>
+                <button class="modal-close" onclick="hideHistory()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="historyLoading" class="loading">
+                    <div class="spinner"></div>
+                    <p data-i18n="history_loading">Loading build history...</p>
+                </div>
+                <div id="historyContent" class="hidden">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="history_name">Image Name</th>
+                                <th data-i18n="history_tag">Tag</th>
+                                <th data-i18n="history_status">Status</th>
+                                <th data-i18n="history_date">Date</th>
+                                <th data-i18n="history_action">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                        </tbody>
+                    </table>
+                    <div id="historyPagination" class="pagination">
+                    </div>
+                </div>
+                <div id="historyEmpty" class="hidden">
+                    <p data-i18n="history_empty">No build history found</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer>
         <p data-i18n="footer">Author: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions</p>
     </footer>
 
-    <script src="script.js?v=1.0.1"></script>
+    <script src="script.js?v=1.0.2"></script>
 </body>
 </html>

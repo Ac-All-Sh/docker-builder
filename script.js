@@ -29,6 +29,15 @@ const translations = {
         game_start: '开始游戏',
         game_hint: '使用方向键或 WASD 控制',
         animation_text: '构建进行中，请稍候...',
+        history_btn: '构建历史',
+        history_title: '构建历史',
+        history_loading: '加载构建历史...',
+        history_name: '镜像名称',
+        history_tag: '标签',
+        history_status: '状态',
+        history_date: '时间',
+        history_action: '操作',
+        history_empty: '暂无构建记录',
         footer: '作者: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions'
     },
     en: {
@@ -60,6 +69,15 @@ const translations = {
         game_start: 'Start Game',
         game_hint: 'Use arrow keys or WASD to play',
         animation_text: 'Building in progress, please wait...',
+        history_btn: 'Build History',
+        history_title: 'Build History',
+        history_loading: 'Loading build history...',
+        history_name: 'Image Name',
+        history_tag: 'Tag',
+        history_status: 'Status',
+        history_date: 'Date',
+        history_action: 'Action',
+        history_empty: 'No build history found',
         footer: 'Author: <a href="https://github.com/Ac-All-Sh">Ac.All.Sh</a> | Powered by GitHub Actions'
     }
 };
@@ -270,6 +288,157 @@ function resetForm() {
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// History variables
+let historyPage = 1;
+const historyPerPage = 10;
+let allBuilds = [];
+
+// Show History Modal
+async function showHistory() {
+    document.getElementById('historyModal').classList.remove('hidden');
+    document.getElementById('historyLoading').classList.remove('hidden');
+    document.getElementById('historyContent').classList.add('hidden');
+    document.getElementById('historyEmpty').classList.add('hidden');
+
+    await loadBuildHistory();
+}
+
+// Hide History Modal
+function hideHistory() {
+    document.getElementById('historyModal').classList.add('hidden');
+}
+
+// Load Build History from GitHub API
+async function loadBuildHistory() {
+    try {
+        const response = await fetch('https://api.github.com/repos/Ac-All-Sh/docker-builder/actions/runs?per_page=100');
+        const data = await response.json();
+
+        if (data.workflow_runs && data.workflow_runs.length > 0) {
+            allBuilds = data.workflow_runs.map(run => ({
+                id: run.id,
+                name: extractImageName(run),
+                tag: extractTag(run),
+                status: run.status,
+                conclusion: run.conclusion,
+                date: new Date(run.created_at).toLocaleString(),
+                url: run.html_url
+            }));
+
+            renderHistoryTable();
+            document.getElementById('historyLoading').classList.add('hidden');
+            document.getElementById('historyContent').classList.remove('hidden');
+        } else {
+            document.getElementById('historyLoading').classList.add('hidden');
+            document.getElementById('historyEmpty').classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('Error loading history:', error);
+        document.getElementById('historyLoading').classList.add('hidden');
+        document.getElementById('historyEmpty').classList.remove('hidden');
+    }
+}
+
+// Extract image name from workflow run
+function extractImageName(run) {
+    const inputs = run.display_title || '';
+    const match = inputs.match(/Build\s+(.+?)(?:\s*:|$)/i);
+    return match ? match[1] : 'Unknown';
+}
+
+// Extract tag from workflow run
+function extractTag(run) {
+    const inputs = run.display_title || '';
+    const match = inputs.match(/:\s*(.+)$/);
+    return match ? match[1] : 'latest';
+}
+
+// Render History Table
+function renderHistoryTable() {
+    const tbody = document.getElementById('historyTableBody');
+    const startIndex = (historyPage - 1) * historyPerPage;
+    const endIndex = startIndex + historyPerPage;
+    const pageBuilds = allBuilds.slice(startIndex, endIndex);
+
+    tbody.innerHTML = pageBuilds.map(build => `
+        <tr>
+            <td>${build.name}</td>
+            <td>${build.tag}</td>
+            <td>
+                <span class="status-badge ${getStatusClass(build)}">
+                    ${getStatusText(build)}
+                </span>
+            </td>
+            <td>${build.date}</td>
+            <td>
+                <a href="${build.url}" target="_blank" class="action-btn">
+                    ${currentLang === 'zh' ? '查看' : 'View'}
+                </a>
+            </td>
+        </tr>
+    `).join('');
+
+    renderPagination();
+}
+
+// Get Status Class
+function getStatusClass(build) {
+    if (build.status === 'completed') {
+        return build.conclusion === 'success' ? 'status-success' : 'status-failure';
+    }
+    return 'status-in-progress';
+}
+
+// Get Status Text
+function getStatusText(build) {
+    if (build.status === 'completed') {
+        return build.conclusion === 'success' ? 'Success' : 'Failed';
+    }
+    return 'Running';
+}
+
+// Render Pagination
+function renderPagination() {
+    const pagination = document.getElementById('historyPagination');
+    const totalPages = Math.ceil(allBuilds.length / historyPerPage);
+
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+
+    // Previous button
+    html += `<button class="page-btn" onclick="changePage(${historyPage - 1})" ${historyPage === 1 ? 'disabled' : ''}>
+        ${currentLang === 'zh' ? '上一页' : 'Previous'}
+    </button>`;
+
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= historyPage - 2 && i <= historyPage + 2)) {
+            html += `<button class="page-btn ${i === historyPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+        } else if (i === historyPage - 3 || i === historyPage + 3) {
+            html += `<span class="page-btn" style="border:none;cursor:default;">...</span>`;
+        }
+    }
+
+    // Next button
+    html += `<button class="page-btn" onclick="changePage(${historyPage + 1})" ${historyPage === totalPages ? 'disabled' : ''}>
+        ${currentLang === 'zh' ? '下一页' : 'Next'}
+    </button>`;
+
+    pagination.innerHTML = html;
+}
+
+// Change Page
+function changePage(page) {
+    const totalPages = Math.ceil(allBuilds.length / historyPerPage);
+    if (page < 1 || page > totalPages) return;
+    historyPage = page;
+    renderHistoryTable();
 }
 
 // Snake Game
